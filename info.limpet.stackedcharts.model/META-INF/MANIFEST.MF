@@ -4,12 +4,20 @@ Bundle-Name: Limpet UI
 Bundle-SymbolicName: info.limpet.stackedcharts.model;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-ClassPath: .
+Bundle-Activator: info.limpet.stackedcharts.model.provider.ModelEditPlugin$Implementation
 Bundle-Vendor: MWC
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: info.limpet.stackedcharts.model,
  info.limpet.stackedcharts.model.impl,
+ info.limpet.stackedcharts.model.presentation,
+ info.limpet.stackedcharts.model.provider,
  info.limpet.stackedcharts.model.util
 Require-Bundle: org.eclipse.core.runtime,
- org.eclipse.emf.ecore;visibility:=reexport
+ org.eclipse.core.resources;visibility:=reexport,
+ org.eclipse.emf.ecore;visibility:=reexport,
+ org.eclipse.emf.edit;visibility:=reexport,
+ org.eclipse.emf.ecore.xmi;visibility:=reexport,
+ org.eclipse.emf.edit.ui;visibility:=reexport,
+ org.eclipse.ui.ide;visibility:=reexport
 Bundle-ActivationPolicy: lazy

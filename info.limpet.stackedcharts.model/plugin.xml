@@ -14,4 +14,45 @@
             genModel="model/model.genmodel"/>
    </extension>
 
+   <extension point="org.eclipse.emf.edit.itemProviderAdapterFactories">
+      <!-- @generated model -->
+      <factory
+            uri="stackedcharts"
+            class="info.limpet.stackedcharts.model.provider.StackedchartsItemProviderAdapterFactory"
+            supportedTypes=
+              "org.eclipse.emf.edit.provider.IEditingDomainItemProvider
+               org.eclipse.emf.edit.provider.IStructuredItemContentProvider
+               org.eclipse.emf.edit.provider.ITreeItemContentProvider
+               org.eclipse.emf.edit.provider.IItemLabelProvider
+               org.eclipse.emf.edit.provider.IItemPropertySource"/>
+   </extension>
+
+   <extension point="org.eclipse.ui.newWizards">
+      <!-- @generated model -->
+      <category
+            id="org.eclipse.emf.ecore.Wizard.category.ID"
+            name="%_UI_Wizard_category"/>
+      <wizard
+            id="info.limpet.stackedcharts.model.presentation.StackedchartsModelWizardID"
+            name="%_UI_StackedchartsModelWizard_label"
+            class="info.limpet.stackedcharts.model.presentation.StackedchartsModelWizard"
+            category="org.eclipse.emf.ecore.Wizard.category.ID"
+            icon="icons/full/obj16/StackedchartsModelFile.gif">
+         <description>%_UI_StackedchartsModelWizard_description</description>
+         <selection class="org.eclipse.core.resources.IResource"/>
+      </wizard>
+   </extension>
+
+   <extension point="org.eclipse.ui.editors">
+      <!-- @generated model -->
+      <editor
+            id="info.limpet.stackedcharts.model.presentation.StackedchartsEditorID"
+            name="%_UI_StackedchartsEditor_label"
+            icon="icons/full/obj16/StackedchartsModelFile.gif"
+            extensions="stackedcharts"
+            class="info.limpet.stackedcharts.model.presentation.StackedchartsEditor"
+            contributorClass="info.limpet.stackedcharts.model.presentation.StackedchartsActionBarContributor">
+      </editor>
+   </extension>
+
 </plugin>
