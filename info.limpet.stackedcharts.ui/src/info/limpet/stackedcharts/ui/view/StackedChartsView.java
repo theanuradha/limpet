@@ -67,6 +67,8 @@ import org.freehep.graphicsio.emf.EMFGraphics2D;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.StandardChartTheme;
 import org.jfree.experimental.chart.swt.ChartComposite;
+import org.jfree.graphics2d.svg.SVGGraphics2D;
+import org.w3c.dom.DOMImplementation;
 
 public class StackedChartsView extends ViewPart implements
     ITabbedPropertySheetPageContributor, ISelectionProvider, DisposeListener
@@ -466,36 +468,73 @@ public class StackedChartsView extends ViewPart implements
     manager.add(showMarker);
     
     
-    final Action export = new Action("Export to WMF", SWT.PUSH)
+    final boolean exportSVG = (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0 || System.getProperty("os.name")
+        .toLowerCase().indexOf("nux") >= 0);
+    
+    
+    final Action export = new Action(exportSVG?"Export to SVG":"Export to WMF", SWT.PUSH)
     {
       @Override
       public void run()
       {
-          try
-          {
+        if(exportSVG)
+          toSVG();
+        else
+          toWMF();
+
+        
+      }
+
+      private void toWMF()
+      {
+        try
+        {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        JFreeChart combined = _chartComposite.getChart();
+        Rectangle bounds = _chartComposite.getBounds();
+        EMFGraphics2D g2d =
+            new EMFGraphics2D(out, new Dimension(bounds.width, bounds.height));
+        g2d.startExport();
+        combined.draw(g2d, new Rectangle2D.Double(0, 0, bounds.width,
+            bounds.height));
+
+        // Cleanup
+        g2d.endExport();
+        
+        Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clpbrd.setContents(new WMFTransfer(out), null);
+          MessageDialog.openInformation(Display.getCurrent().getActiveShell(), "WMF Export", "Exported to Clipboard.[WMF]");
+          
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
+      }
+      
+      private void toSVG()
+      {
+        try
+        {
           ByteArrayOutputStream out = new ByteArrayOutputStream();
           JFreeChart combined = _chartComposite.getChart();
           Rectangle bounds = _chartComposite.getBounds();
-          EMFGraphics2D g2d =
-              new EMFGraphics2D(out, new Dimension(bounds.width, bounds.height));
-          g2d.startExport();
-          combined.draw(g2d, new Rectangle2D.Double(0, 0, bounds.width,
-              bounds.height));
-
-          // Cleanup
-          g2d.endExport();
           
+          SVGGraphics2D g2 = new SVGGraphics2D(bounds.width, bounds.height);
+          
+          combined.draw(g2,  new Rectangle2D.Double(0, 0, bounds.width,
+              bounds.height));
+          out.write(g2.getSVGElement().getBytes());
+      
           Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-          clpbrd.setContents(new WMFTransfer(out), null);
-            MessageDialog.openInformation(Display.getCurrent().getActiveShell(), "WMF Export", "Exported to Clipboard.[WMF]");
-            
-          }
-          catch (Exception e)
-          {
-            e.printStackTrace();
-          }
-
-        
+          clpbrd.setContents(new SVGTransfer(out), null);
+          MessageDialog.openInformation(Display.getCurrent().getActiveShell(), "SVG Export", "Exported to Clipboard. [SVG]");
+          
+        }
+        catch (Exception e)
+        {
+          e.printStackTrace();
+        }
       }
     };
     export.setImageDescriptor(Activator.imageDescriptorFromPlugin(Activator.PLUGIN_ID, "icons/export_wmf.png"));
@@ -929,5 +968,66 @@ public class StackedChartsView extends ViewPart implements
          return false;
     }
 }
+  public static class SVGTransfer implements Transferable{
+    
+    static final private DataFlavor SVG_FLAVOR = new DataFlavor("image/svg+xml; class=java.io.InputStream","Scalable Vector Graphic");
+    static final private DataFlavor INKSCAPE_FLAVOR = new DataFlavor("image/x-inkscape-svg; class=java.io.InputStream","Scalable Vector Graphic");
+    
+    
+    static {
+      // SVG  clipboard format
+      try {
+           SystemFlavorMap sfm = (SystemFlavorMap)SystemFlavorMap.getDefaultFlavorMap();
+           sfm.addUnencodedNativeForFlavor(SVG_FLAVOR, "image/svg+xml");
+           sfm.addUnencodedNativeForFlavor(INKSCAPE_FLAVOR, "image/x-inkscape-svg");
+      } catch(Exception e) {
+           System.err.println("[EMFChartSelection,static initializer] Error "+e.getClass().getName()+", "+e.getMessage());
+      }
+ }
+   
+    private static DataFlavor[] supportedFlavors = {
+      SVG_FLAVOR,INKSCAPE_FLAVOR
+    };
+    
+    ByteArrayOutputStream stream;
+    
+    public SVGTransfer(ByteArrayOutputStream stream) {
+      this.stream = stream;
+    }
+    
+    //@Override
+    public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+      if (flavor.equals(SVG_FLAVOR) || flavor.equals(INKSCAPE_FLAVOR)) {
+        System.out.println("Mime type application/svg recognized");
+        return new ByteArrayInputStream(stream.toByteArray());
+      } else 
+        throw new UnsupportedFlavorException(flavor);
+    }
+    
+    public Object getTransferDataOld(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+      if (!((flavor.equals(SVG_FLAVOR))|| flavor.equals(INKSCAPE_FLAVOR)))
+      {
+        throw new UnsupportedFlavorException(flavor);
+
+      }
+      else
+        return new ByteArrayInputStream(stream.toByteArray());
+
+    }
+    
+    
+    
+    public DataFlavor[] getTransferDataFlavors() {
+      return supportedFlavors;
+    }
+    
+    public boolean isDataFlavorSupported(DataFlavor flavor) {
+      for(DataFlavor f : supportedFlavors) {
+        if (f.equals(flavor))
+          return true;
+      }
+      return false;
+    }
+  }
 
 }
